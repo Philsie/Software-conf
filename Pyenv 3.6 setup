@@ -1,0 +1,37 @@
+#!/bin/bash
+# Set up the global python environments in an opinionated manner.
+# See https://github.com/pyenv/pyenv to learn more about generally installing and pyenv.
+#
+# Apparently, installing Python 3.6 under Ubuntu 22 causes some parts of the program to segfault,
+# E.g. the Python command `import ctypes` or the usage of `pip` would segfault.
+# Building Python with the `clang` compiler seems to solve the issue.
+#
+# Also, work against an issue Pyenv might have with building `libpython3.6m.1.0.so`, see:
+# https://github.com/pyenv/pyenv/issues/917
+
+# install python requirements
+sudo apt update;
+sudo apt install -y \
+    make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl \
+    llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev clang;
+
+# install pyenv and set up a global python environment
+curl https://pyenv.run | bash;
+
+export CC='/usr/bin/clang';
+export CONFIGURE_OPTS='--enable-shared';
+fish -c 'pyenv update; pyenv install 3.6.15; pyenv global 3.6.15';
+command -v python3;
+python3 --version;
+python3 "import ctypes";  # should not segfault
+
+export PIP_REQUIRE_VIRTUALENV=false;  # allow temporarily global pip to make installations
+
+# install pip for Python 3.6
+curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py;
+python3 get-pip.py --force-reinstall;
+rm get-pip.py;
+# shellcheck disable=SC2086
+export PATH="$HOME/.local/bin":$PATH;
+
+pip install bpython;  # an advanced, fast python repl with syntax highlighting and autocomplete
